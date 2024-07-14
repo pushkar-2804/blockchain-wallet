@@ -1,30 +1,30 @@
 // import { error } from '@sveltejs/kit';
-import { createPool, sql } from '@vercel/postgres'
-import { POSTGRES_URL } from '$env/static/private'
+import { createPool, sql } from "@vercel/postgres";
+import { POSTGRES_URL } from "$env/static/private";
 
 export async function load() {
-  const db = createPool({ connectionString: POSTGRES_URL })
+  const db = createPool({ connectionString: POSTGRES_URL });
 
   try {
-    const { rows: names } = await db.query('SELECT * FROM names')
+    const { rows: names } = await db.query("SELECT * FROM names");
     return {
       names: names,
-    }
+    };
   } catch (error) {
-      console.log(
-        'Table does not exist, creating and seeding it with dummy data now...'
-      )
-      // Table is not created yet
-      await seed()
-      const { rows: names } = await db.query('SELECT * FROM names')
-      return {
-        names: names
-      }
-    } 
+    console.log(
+      "Table does not exist, creating and seeding it with dummy data now..."
+    );
+    // Table is not created yet
+    await seed();
+    const { rows: names } = await db.query("SELECT * FROM names");
+    return {
+      names: names,
+    };
+  }
 }
 
 async function seed() {
-  const db = createPool({ connectionString: POSTGRES_URL })
+  const db = createPool({ connectionString: POSTGRES_URL });
   const client = await db.connect();
   const createTable = await client.sql`CREATE TABLE IF NOT EXISTS names (
       id SERIAL PRIMARY KEY,
@@ -32,9 +32,9 @@ async function seed() {
       email VARCHAR(255) UNIQUE NOT NULL,
       "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
-    `
+    `;
 
-  console.log(`Created "users" table`)
+  console.log(`Created "users" table`);
 
   const users = await Promise.all([
     client.sql`
@@ -52,64 +52,63 @@ async function seed() {
           VALUES ('Vivek', 'vivek@gmail.com')
           ON CONFLICT (email) DO NOTHING;
       `,
-  ])
-  console.log(`Seeded ${users.length} users`)
+  ]);
+  console.log(`Seeded ${users.length} users`);
 
   return {
     createTable,
     users,
-  }
+  };
 }
 
 /** @type {import('./$types').Actions} */
 export const actions = {
-	
-  // update: async ({ request }) => {
-  //   const data = await request.formData();
-  //   const db = createPool({ connectionString: POSTGRES_URL })
-  //   const client = await db.connect();
+  update: async ({ request }) => {
+    console.log("updating");
 
-  //   const email = data.get('email');
-	// 	const name = data.get('name');
+    const data = await request.formData();
+    const db = createPool({ connectionString: POSTGRES_URL });
+    const client = await db.connect();
 
-  //   const updateUser = await client.sql`
-  //   UPDATE names
-  //   SET email = ${email}, name = ${name}
-  //   WHERE     ;`
-	
-	// 	return { success: true };
-	// },
+    const id = data.get("id");
+    const email = data.get("email");
+    const name = data.get("name");
+
+    const updateUser = await client.sql`
+    UPDATE names
+    SET email = ${email}, name = ${name}
+    WHERE id = ${id};`;
+
+    return { success: true };
+  },
 
   delete: async ({ request }) => {
     const data = await request.formData();
-    const db = createPool({ connectionString: POSTGRES_URL })
+    const db = createPool({ connectionString: POSTGRES_URL });
     const client = await db.connect();
 
-    const id = data.get('id');
+    const id = data.get("id");
 
     const deleteUser = await client.sql`
     DELETE FROM names
-    WHERE id = ${id};`
-	
-		return { success: true };
-	},
+    WHERE id = ${id};`;
 
-	create: async ({request}) => {
-		const data = await request.formData();
-    const db = createPool({ connectionString: POSTGRES_URL })
+    return { success: true };
+  },
+
+  create: async ({ request }) => {
+    const data = await request.formData();
+    const db = createPool({ connectionString: POSTGRES_URL });
     const client = await db.connect();
 
-    const email = data.get('email');
-		const name = data.get('name');
+    const email = data.get("email");
+    const name = data.get("name");
 
     const createUser = await client.sql`
       INSERT INTO names (name, email)
       VALUES (${name}, ${email})
       ON CONFLICT (email) DO NOTHING;
-    `
+    `;
     return { success: true };
-	}
+  },
 };
-
-
-
