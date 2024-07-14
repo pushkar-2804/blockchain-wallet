@@ -1,7 +1,7 @@
 import { Root } from "../../contracts/root";
 import { DefaultProvider, sha256, bsv, toByteString } from "scrypt-ts";
 import { NeucronSigner } from "neucron-signer";
-import artifact from "../../../artifacts/root.json"
+import artifact from "../../../artifacts/root.json";
 
 const provider = new DefaultProvider({ network: bsv.Networks.mainnet });
 const signer = new NeucronSigner(provider);
@@ -24,7 +24,7 @@ export const actions = {
       );
 
       return { success: true, txid: deployTx.id };
-    } catch (error:any) {
+    } catch (error: any) {
       return { success: false, txid: error.message };
     }
   },
@@ -32,7 +32,7 @@ export const actions = {
   unlock: async ({ request }) => {
     // Retrieve data from the form
     const data = await request.formData();
-    const root = Number(data.get("root"));
+    const root = BigInt(Number(data.get("root")));
 
     await instance.connect(signer);
     // Call the unlock method
@@ -42,7 +42,7 @@ export const actions = {
         "contract unlocked successfully : https://whatsonchain.com/tx/" +
           callTx.id
       );
-      return { success: true, txid: callTx.id };
+      return { success: true, txid: callTx.id, unlock: true };
     } catch (error: any) {
       console.log(error.message);
       return { success: false, txid: error.message };
